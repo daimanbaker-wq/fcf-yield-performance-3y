@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Top 10 High FCF Yield Equities — Trailing 3Y Performance</title>
+  <title>Top 10 High FCF Yield Equities — Performance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -80,11 +80,22 @@
       align-items: center;
       gap: 16px;
     }
+    .controls-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
     .select-group {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      min-width: 260px;
+    }
+    .select-group.company {
+      min-width: 270px;
+    }
+    .select-group.timeframe {
+      min-width: 150px;
     }
     label {
       font-size: 0.8rem;
@@ -189,26 +200,37 @@
   <div class="container">
     <header>
       <div class="badge">Screening Universe: Top 10 FCF Yield</div>
-      <h1>Trailing 3-Year Equity Performance</h1>
-      <p class="subtitle">Global Equities Ex-Financials ($25B+ Market Cap) &bull; Nov 2023 &ndash; Nov 2026</p>
+      <h1>Trailing Equity Performance</h1>
+      <p class="subtitle" id="subtitleText">Global Equities Ex-Financials ($25B+ Market Cap) &bull; Trailing Performance</p>
     </header>
 
     <div class="controls-card">
-      <div class="select-group">
-        <label for="companySelect">Select Company</label>
-        <select id="companySelect">
-          <option value="ALL">★ Compare All 10 Companies (% Return)</option>
-          <option value="CMCSA" selected>1. Comcast Corp (CMCSA) — 22.3% FCF Yield</option>
-          <option value="MPC">2. Marathon Petroleum (MPC) — 19.6% FCF Yield</option>
-          <option value="VLO">3. Valero Energy (VLO) — 15.4% FCF Yield</option>
-          <option value="T">4. AT&T Inc. (T) — 13.0% FCF Yield</option>
-          <option value="ADBE">5. Adobe Inc. (ADBE) — 11.5% FCF Yield</option>
-          <option value="TMUS">6. T-Mobile US (TMUS) — 10.4% FCF Yield</option>
-          <option value="VZ">7. Verizon Communications (VZ) — 10.3% FCF Yield</option>
-          <option value="TAK">8. Takeda Pharmaceutical (TAK) — 8.9% FCF Yield</option>
-          <option value="CVX">9. Chevron Corp (CVX) — 8.2% FCF Yield</option>
-          <option value="MO">10. Altria Group (MO) — 7.5% FCF Yield</option>
-        </select>
+      <div class="controls-left">
+        <div class="select-group company">
+          <label for="companySelect">Select Company</label>
+          <select id="companySelect">
+            <option value="ALL">★ Compare All 10 Companies (% Return)</option>
+            <option value="CMCSA" selected>1. Comcast Corp (CMCSA) — 22.3% FCF Yield</option>
+            <option value="MPC">2. Marathon Petroleum (MPC) — 19.6% FCF Yield</option>
+            <option value="VLO">3. Valero Energy (VLO) — 15.4% FCF Yield</option>
+            <option value="T">4. AT&T Inc. (T) — 13.0% FCF Yield</option>
+            <option value="ADBE">5. Adobe Inc. (ADBE) — 11.5% FCF Yield</option>
+            <option value="TMUS">6. T-Mobile US (TMUS) — 10.4% FCF Yield</option>
+            <option value="VZ">7. Verizon Communications (VZ) — 10.3% FCF Yield</option>
+            <option value="TAK">8. Takeda Pharmaceutical (TAK) — 8.9% FCF Yield</option>
+            <option value="CVX">9. Chevron Corp (CVX) — 8.2% FCF Yield</option>
+            <option value="MO">10. Altria Group (MO) — 7.5% FCF Yield</option>
+          </select>
+        </div>
+
+        <div class="select-group timeframe">
+          <label for="timeframeSelect">Timeframe</label>
+          <select id="timeframeSelect">
+            <option value="3y" selected>3 Years</option>
+            <option value="6m">6 Months</option>
+            <option value="1w">1 Week</option>
+          </select>
+        </div>
       </div>
 
       <div class="mode-toggle" id="viewToggleGroup">
@@ -224,19 +246,19 @@
         <div class="metric-sub" id="metricSector">-</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">3Y Total Return</div>
+        <div class="metric-label" id="labelReturn">Period Return</div>
         <div class="metric-val" id="metricReturn">-</div>
         <div class="metric-sub" id="metricReturnSub">Dividend-adjusted</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Current / Start Price</div>
+        <div class="metric-label">Current / Base Price</div>
         <div class="metric-val" id="metricPrice">-</div>
         <div class="metric-sub" id="metricStartPrice">-</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">3Y Range (Low / High)</div>
+        <div class="metric-label" id="labelRange">Period Range (Low / High)</div>
         <div class="metric-val" id="metricRange">-</div>
-        <div class="metric-sub">Trailing 36 months</div>
+        <div class="metric-sub" id="metricRangeSub">Selected timeframe</div>
       </div>
     </div>
 
@@ -67995,6 +68017,7 @@
   }
 };
     let currentTicker = 'CMCSA';
+    let currentTimeframe = '3y'; // '3y', '6m', '1w'
     let viewMode = 'pct'; // 'pct' or 'price'
     let chartInstance = null;
 
@@ -68002,6 +68025,21 @@
       '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6',
       '#06b6d4', '#eab308', '#14b8a6', '#f97316', '#6366f1'
     ];
+
+    function getTimeframeSlice(seriesArray) {
+      if (currentTimeframe === '1w') {
+        return seriesArray.slice(-6); // ~5-6 trading days
+      } else if (currentTimeframe === '6m') {
+        return seriesArray.slice(-126); // ~126 trading days
+      }
+      return seriesArray; // '3y' = full series
+    }
+
+    function getTimeframeLabel() {
+      if (currentTimeframe === '1w') return '1-Week';
+      if (currentTimeframe === '6m') return '6-Month';
+      return '3-Year';
+    }
 
     function setViewMode(mode) {
       viewMode = mode;
@@ -68012,6 +68050,11 @@
 
     function updateMetrics(ticker) {
       const metricsRow = document.getElementById('metricsRow');
+      const tfLabel = getTimeframeLabel();
+      document.getElementById('labelReturn').textContent = `${tfLabel} Return`;
+      document.getElementById('labelRange').textContent = `${tfLabel} Range (Low / High)`;
+      document.getElementById('metricRangeSub').textContent = `Trailing ${currentTimeframe === '1w' ? '5 trading days' : (currentTimeframe === '6m' ? '6 months' : '36 months')}`;
+
       if (ticker === 'ALL') {
         metricsRow.style.display = 'none';
         return;
@@ -68023,15 +68066,23 @@
       document.getElementById('metricFcf').textContent = item.fcf_yield;
       document.getElementById('metricSector').textContent = item.sector;
 
-      const ret = item.total_return_pct;
+      const slicedSeries = getTimeframeSlice(item.series);
+      const basePrice = slicedSeries[0].price;
+      const currPrice = slicedSeries[slicedSeries.length - 1].price;
+      const periodReturn = ((currPrice - basePrice) / basePrice) * 100;
+
+      const prices = slicedSeries.map(s => s.price);
+      const minP = Math.min(...prices);
+      const maxP = Math.max(...prices);
+
       const retElem = document.getElementById('metricReturn');
-      retElem.textContent = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
-      retElem.style.color = ret >= 0 ? 'var(--green)' : 'var(--red)';
+      retElem.textContent = (periodReturn >= 0 ? '+' : '') + periodReturn.toFixed(2) + '%';
+      retElem.style.color = periodReturn >= 0 ? 'var(--green)' : 'var(--red)';
 
-      document.getElementById('metricPrice').textContent = '$' + item.current_price.toFixed(2);
-      document.getElementById('metricStartPrice').textContent = 'Base 3Y: $' + item.start_price.toFixed(2);
+      document.getElementById('metricPrice').textContent = '$' + currPrice.toFixed(2);
+      document.getElementById('metricStartPrice').textContent = `Base (${slicedSeries[0].date}): $` + basePrice.toFixed(2);
 
-      document.getElementById('metricRange').textContent = '$' + item.min_3y.toFixed(2) + ' – $' + item.max_3y.toFixed(2);
+      document.getElementById('metricRange').textContent = '$' + minP.toFixed(2) + ' – $' + maxP.toFixed(2);
     }
 
     function renderChart() {
@@ -68044,16 +68095,20 @@
 
       if (currentTicker === 'ALL') {
         toggleGroup.style.display = 'none';
-        // Multi-line chart (% return)
-        const sampleDates = data['CMCSA'].returns.map(r => r.date);
+        const sampleSeries = getTimeframeSlice(data['CMCSA'].series);
+        const dates = sampleSeries.map(s => s.date);
+
         const datasets = Object.keys(data).map((t, idx) => {
+          const sliced = getTimeframeSlice(data[t].series);
+          const baseP = sliced[0].price;
+          const returnVals = sliced.map(s => +(((s.price - baseP) / baseP) * 100).toFixed(2));
           return {
             label: `${t} (${data[t].name})`,
-            data: data[t].returns.map(r => r.returnPct),
+            data: returnVals,
             borderColor: colors[idx % colors.length],
             borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 5,
+            pointRadius: currentTimeframe === '1w' ? 4 : 0,
+            pointHoverRadius: 6,
             tension: 0.1
           };
         });
@@ -68061,7 +68116,7 @@
         chartInstance = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: sampleDates,
+            labels: dates,
             datasets: datasets
           },
           options: {
@@ -68111,10 +68166,17 @@
       } else {
         toggleGroup.style.display = 'flex';
         const item = data[currentTicker];
+        const sliced = getTimeframeSlice(item.series);
+        const baseP = sliced[0].price;
         const isPct = viewMode === 'pct';
-        const dates = isPct ? item.returns.map(r => r.date) : item.series.map(s => s.date);
-        const values = isPct ? item.returns.map(r => r.returnPct) : item.series.map(s => s.price);
-        const isPositive = isPct ? item.total_return_pct >= 0 : (item.current_price >= item.start_price);
+        
+        const dates = sliced.map(s => s.date);
+        const values = isPct 
+          ? sliced.map(s => +(((s.price - baseP) / baseP) * 100).toFixed(2))
+          : sliced.map(s => s.price);
+
+        const currP = sliced[sliced.length - 1].price;
+        const isPositive = currP >= baseP;
         const strokeColor = isPositive ? '#10b981' : '#ef4444';
         const fillColor = isPositive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
 
@@ -68129,7 +68191,7 @@
               backgroundColor: fillColor,
               borderWidth: 2.5,
               fill: true,
-              pointRadius: 0,
+              pointRadius: currentTimeframe === '1w' ? 4 : 0,
               pointHoverRadius: 6,
               tension: 0.1
             }]
@@ -68183,6 +68245,12 @@
 
     document.getElementById('companySelect').addEventListener('change', function(e) {
       currentTicker = e.target.value;
+      updateMetrics(currentTicker);
+      renderChart();
+    });
+
+    document.getElementById('timeframeSelect').addEventListener('change', function(e) {
+      currentTimeframe = e.target.value;
       updateMetrics(currentTicker);
       renderChart();
     });
